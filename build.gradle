@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+}
+
+group = 'burpsqlmap'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Provided by Burp at runtime — compile-only.
+    compileOnly 'net.portswigger.burp.extensions:montoya-api:2025.5'
+
+    // Test target only (not shipped in the extension jar).
+    testImplementation 'org.xerial:sqlite-jdbc:3.45.1.0'
+}
+
+// The extension jar bundles src/main/resources, which includes the embeddable
+// Python (runtime/python-embed.zip) and sqlmap (runtime/sqlmap.zip). These make
+// the extension self-contained: no Python or sqlmap install on the workstation.
+jar {
+    archiveBaseName = 'burp-sqlmap'
+    from('src/main/resources') {
+        include 'runtime/**'
+    }
+    manifest {
+        attributes('Implementation-Title': 'Standalone sqlmap',
+                   'Implementation-Version': version)
+    }
+}
+
+tasks.register('bundledResourcesCheck') {
+    doLast {
+        ['src/main/resources/runtime/python-embed.zip',
+         'src/main/resources/runtime/sqlmap.zip'].each {
+            if (!file(it).exists()) {
+                throw new GradleException("Missing bundled runtime: $it — see README 'Fetching the runtime'.")
+            }
+        }
+    }
+}
+jar.dependsOn 'bundledResourcesCheck'

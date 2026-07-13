@@ -1,0 +1,25 @@
+# Local tooling / editor / IDE
+.claude/
+.gradle/
+.idea/
+*.iml
+.vscode/
+
+# Build output
+build/
+*.class
+
+# Burp project files (contain captured traffic — never commit)
+*.burp
+*.burp.backup
+
+# Large, re-fetchable dependencies (see README "Building from source").
+# The prebuilt dist/burp-sqlmap.jar already bundles these.
+src/main/resources/runtime/python-embed.zip
+src/main/resources/runtime/sqlmap.zip
+lib/sqlite-jdbc.jar
+lib/slf4j-api.jar
+
+# sqlmap scan artifacts / logs
+sqlmap-scan-*/
+*.log

