@@ -21,6 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-The MIT license above covers the original code in this repository (the Burp
-extension). The prebuilt dist/burp-sqlmap.jar additionally bundles third-party
-software that is redistributed under its own license — see THIRD-PARTY-NOTICES.md.
+The MIT license above covers the code in this repository (the Burp extension).
+sqlmap and Python are NOT bundled or redistributed here — you supply them at
+runtime. See THIRD-PARTY-NOTICES.md for the compile-time / test-only components.

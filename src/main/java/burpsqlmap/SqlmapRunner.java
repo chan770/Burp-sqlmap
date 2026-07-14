@@ -16,21 +16,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 /**
- * Owns the bundled runtime and executes sqlmap as a subprocess. A Burp request
- * is written to a temporary raw-request file and passed to sqlmap via -r so the
- * exact headers/cookies/body are used. Supports multiple concurrent scans (one
- * per UI tab); each scan's process is reported to the caller via {@code onStart}
- * so the caller can cancel just that scan.
+ * Executes a user-supplied sqlmap as a subprocess, using the Python and sqlmap
+ * locations configured in {@link SqlmapSettings}. A Burp request is written to a
+ * temporary raw-request file and passed to sqlmap via -r so the exact
+ * headers/cookies/body are used. Supports multiple concurrent scans (one per UI
+ * tab); each scan's process is reported to the caller via {@code onStart} so the
+ * caller can cancel just that scan.
  */
 class SqlmapRunner {
 
     private final MontoyaApi api;
-    private final RuntimeBootstrap runtime;
+    private final SqlmapSettings settings;
     private final Set<Process> active = ConcurrentHashMap.newKeySet();
 
-    SqlmapRunner(MontoyaApi api) {
+    SqlmapRunner(MontoyaApi api, SqlmapSettings settings) {
         this.api = api;
-        this.runtime = new RuntimeBootstrap(api);
+        this.settings = settings;
     }
 
     /** Kill every running scan; used on extension unload. */
@@ -54,8 +55,12 @@ class SqlmapRunner {
      * process exit code, or -1 if the runtime could not be prepared.
      */
     int run(HttpRequest request, ScanOptions opts, Consumer<String> onLine, Consumer<Process> onStart) {
-        if (!runtime.ensureExtracted()) {
-            onLine.accept("[!] Bundled runtime unavailable — cannot start sqlmap.");
+        Path sqlmapPy = settings.resolveSqlmapPy();
+        if (sqlmapPy == null) {
+            onLine.accept("[!] sqlmap location is not set (or sqlmap.py was not found there).");
+            onLine.accept("[!] Open the 'sqlmap configuration' bar at the top of this tab and set the");
+            onLine.accept("    path to your sqlmap folder or sqlmap.py.");
+            onLine.accept("[!] Download sqlmap from: " + SqlmapSettings.SQLMAP_DOWNLOAD_URL);
             return -1;
         }
 
@@ -73,13 +78,14 @@ class SqlmapRunner {
             return -1;
         }
 
-        List<String> cmd = buildCommand(request, requestFile, outputDir, opts);
-        onLine.accept("[*] Runtime: " + runtime.pythonExe());
-        onLine.accept("[*] Command: " + String.join(" ", maskCommand(cmd)));
+        List<String> cmd = buildCommand(request, sqlmapPy, requestFile, outputDir, opts);
+        onLine.accept("[*] Python:  " + settings.resolvePython());
+        onLine.accept("[*] sqlmap:  " + sqlmapPy);
+        onLine.accept("[*] Command: " + String.join(" ", cmd));
         onLine.accept("");
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
-        pb.directory(runtime.sqlmapPy().getParent().toFile());
+        pb.directory(sqlmapPy.getParent().toFile());
         pb.redirectErrorStream(true);
         // Ensure UTF-8 so sqlmap's banner/table drawing does not crash on cp1252.
         pb.environment().put("PYTHONIOENCODING", "utf-8");
@@ -128,10 +134,10 @@ class SqlmapRunner {
         return exit;
     }
 
-    private List<String> buildCommand(HttpRequest request, Path requestFile, Path outputDir, ScanOptions opts) {
+    private List<String> buildCommand(HttpRequest request, Path sqlmapPy, Path requestFile, Path outputDir, ScanOptions opts) {
         List<String> cmd = new ArrayList<>();
-        cmd.add(runtime.pythonExe().toString());
-        cmd.add(runtime.sqlmapPy().toString());
+        cmd.add(settings.resolvePython());
+        cmd.add(sqlmapPy.toString());
         cmd.add("-r");
         cmd.add(requestFile.toString());
 
@@ -178,11 +184,6 @@ class SqlmapRunner {
                 cmd.add(extra);
             }
         }
-        return cmd;
-    }
-
-    /** Hide nothing sensitive currently, but keep a hook for future secrets. */
-    private List<String> maskCommand(List<String> cmd) {
         return cmd;
     }
 }

@@ -1,30 +1,18 @@
 # Third-party notices
 
-The Burp extension source in this repository is licensed under the MIT License
-(see `LICENSE`). To make the extension self-contained ("standalone"), the
-prebuilt `dist/burp-sqlmap.jar` **bundles** the following third-party software,
-which is run as a separate subprocess (mere aggregation — the extension invokes
-it at arm's length and does not link against it):
+The Burp extension in this repository is licensed under the MIT License (see
+`LICENSE`). **No third-party software is bundled or redistributed in the jar.**
+
+- **sqlmap** and **Python** are supplied by the user at runtime — you download
+  them yourself and point the extension at their paths in the settings. This
+  repo does not contain or redistribute sqlmap (GPL v2.0,
+  https://github.com/sqlmapproject/sqlmap) or Python (PSF,
+  https://www.python.org/).
+
+Bundled/committed in this repo, or used only for the local test target:
 
 | Component | Purpose | License | Source |
 |-----------|---------|---------|--------|
-| **sqlmap** | The SQL injection tool that performs all detection/exploitation | GNU GPL v2.0 | https://github.com/sqlmapproject/sqlmap |
-| **CPython (Windows embeddable)** | Interpreter used to run sqlmap without a system Python install | PSF License | https://www.python.org/ |
-
-The complete, unmodified source of **sqlmap** is included inside the jar
-(`runtime/sqlmap.zip`) as required by the GPL. sqlmap is distributed under the
-GPL v2.0; a copy of that license is contained within the sqlmap archive.
-
-Used only for the local test target (`test/VulnServer.java`), not bundled in the
-extension jar:
-
-| Component | License | Source |
-|-----------|---------|--------|
-| **sqlite-jdbc** (org.xerial) | Apache License 2.0 | https://github.com/xerial/sqlite-jdbc |
-| **SLF4J API** | MIT License | https://www.slf4j.org/ |
-
-Compile-time only (provided by Burp at runtime, not redistributed):
-
-| Component | License | Source |
-|-----------|---------|--------|
-| **Burp Montoya API** (net.portswigger.burp.extensions) | provided by PortSwigger via Maven Central | https://portswigger.net/burp/documentation/desktop/extensions |
+| **Burp Montoya API** (`lib/montoya-api.jar`) | Compile-time API; provided by Burp at runtime | provided by PortSwigger via Maven Central | https://portswigger.net/burp/documentation/desktop/extensions |
+| **sqlite-jdbc** (org.xerial) | Backing store for `test/VulnServer.java` only (not committed) | Apache License 2.0 | https://github.com/xerial/sqlite-jdbc |
+| **SLF4J API** | Logging for the test server only (not committed) | MIT License | https://www.slf4j.org/ |

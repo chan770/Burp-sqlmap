@@ -13,10 +13,7 @@ build/
 *.burp
 *.burp.backup
 
-# Large, re-fetchable dependencies (see README "Building from source").
-# The prebuilt dist/burp-sqlmap.jar already bundles these.
-src/main/resources/runtime/python-embed.zip
-src/main/resources/runtime/sqlmap.zip
+# Test-only jars (re-fetchable; see README "Building from source")
 lib/sqlite-jdbc.jar
 lib/slf4j-api.jar
 

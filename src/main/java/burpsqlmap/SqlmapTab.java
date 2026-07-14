@@ -18,6 +18,11 @@ class SqlmapTab {
 
     private final MontoyaApi api;
     private final SqlmapRunner runner;
+    private final SqlmapSettings settings;
+
+    private final JTextField pythonField = new JTextField(22);
+    private final JTextField sqlmapField = new JTextField(30);
+    private final JLabel configStatus = new JLabel();
 
     private final JPanel root;
     private final JTabbedPane tabs = new JTabbedPane();
@@ -29,9 +34,10 @@ class SqlmapTab {
 
     private int counter = 0;
 
-    SqlmapTab(MontoyaApi api, SqlmapRunner runner) {
+    SqlmapTab(MontoyaApi api, SqlmapRunner runner, SqlmapSettings settings) {
         this.api = api;
         this.runner = runner;
+        this.settings = settings;
         this.root = build();
         addBlankTab(); // start with one empty tab, like Repeater
     }
@@ -111,8 +117,137 @@ class SqlmapTab {
         split.setDividerLocation(300);
 
         JPanel panel = new JPanel(new BorderLayout());
+        panel.add(buildConfigBar(), BorderLayout.NORTH);
         panel.add(split, BorderLayout.CENTER);
         return panel;
+    }
+
+    /** Top bar where the analyst points the extension at their Python + sqlmap. */
+    private JComponent buildConfigBar() {
+        pythonField.setText(settings.pythonPath());
+        sqlmapField.setText(settings.sqlmapPath());
+        pythonField.setToolTipText("Path to python/python3. Leave blank to use 'python' on PATH.");
+        sqlmapField.setToolTipText("Path to your sqlmap folder or sqlmap.py.");
+
+        JButton pyBrowse = new JButton("Browse…");
+        pyBrowse.addActionListener(e -> browseInto(pythonField, false));
+        JButton smBrowse = new JButton("Browse…");
+        smBrowse.addActionListener(e -> browseInto(sqlmapField, true));
+
+        JButton save = new JButton("Save");
+        save.putClientProperty("FlatLaf.style", "background: #ff6633; foreground: #ffffff");
+        save.setBackground(new Color(0xFF, 0x66, 0x33));
+        save.setForeground(Color.WHITE);
+        save.addActionListener(e -> saveConfig());
+
+        JButton test = new JButton("Test");
+        test.addActionListener(e -> testConfig());
+
+        JLabel download = new JLabel("Download sqlmap ↗");
+        download.setForeground(new Color(0x4a, 0x9e, 0xff));
+        download.setToolTipText(SqlmapSettings.SQLMAP_DOWNLOAD_URL);
+        download.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        download.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new java.net.URI(SqlmapSettings.SQLMAP_DOWNLOAD_URL));
+                } catch (Exception ex) {
+                    api.logging().logToError("[config] open failed: " + ex.getMessage());
+                }
+            }
+        });
+
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
+        row.add(new JLabel("sqlmap:"));
+        row.add(sqlmapField);
+        row.add(smBrowse);
+        row.add(new JLabel("   Python:"));
+        row.add(pythonField);
+        row.add(pyBrowse);
+        row.add(save);
+        row.add(test);
+        row.add(download);
+
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBorder(BorderFactory.createTitledBorder("sqlmap configuration"));
+        bar.add(row, BorderLayout.CENTER);
+        configStatus.setBorder(BorderFactory.createEmptyBorder(0, 8, 4, 8));
+        bar.add(configStatus, BorderLayout.SOUTH);
+        refreshConfigStatus();
+        return bar;
+    }
+
+    private void browseInto(JTextField field, boolean directoriesToo) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(directoriesToo
+                ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.FILES_ONLY);
+        String cur = field.getText().trim();
+        if (!cur.isEmpty()) {
+            java.io.File f = new java.io.File(cur);
+            chooser.setCurrentDirectory(f.isDirectory() ? f : f.getParentFile());
+        }
+        if (chooser.showOpenDialog(root) == JFileChooser.APPROVE_OPTION) {
+            field.setText(chooser.getSelectedFile().getAbsolutePath());
+        }
+    }
+
+    private void saveConfig() {
+        settings.setPythonPath(pythonField.getText().trim());
+        settings.setSqlmapPath(sqlmapField.getText().trim());
+        refreshConfigStatus();
+    }
+
+    private void refreshConfigStatus() {
+        java.nio.file.Path py = settings.resolveSqlmapPy();
+        if (py != null) {
+            configStatus.setText("✓ sqlmap found: " + py + "   |   Python: " + settings.resolvePython());
+            configStatus.setForeground(new Color(0x4c, 0xaf, 0x50));
+        } else {
+            configStatus.setText("✗ Set the path to your sqlmap folder or sqlmap.py, then Save. "
+                    + "Download it from " + SqlmapSettings.SQLMAP_DOWNLOAD_URL);
+            configStatus.setForeground(new Color(0xE0, 0x5a, 0x5a));
+        }
+    }
+
+    private void testConfig() {
+        saveConfig();
+        java.nio.file.Path sqlmapPy = settings.resolveSqlmapPy();
+        if (sqlmapPy == null) {
+            configStatus.setText("✗ sqlmap not found at that path.");
+            configStatus.setForeground(new Color(0xE0, 0x5a, 0x5a));
+            return;
+        }
+        configStatus.setText("Testing '" + settings.resolvePython() + " sqlmap.py --version' …");
+        configStatus.setForeground(null);
+        Thread t = new Thread(() -> {
+            String result;
+            try {
+                ProcessBuilder pb = new ProcessBuilder(
+                        settings.resolvePython(), sqlmapPy.toString(), "--version", "--batch");
+                pb.redirectErrorStream(true);
+                pb.environment().put("PYTHONIOENCODING", "utf-8");
+                Process p = pb.start();
+                p.getOutputStream().close();
+                String out = new String(p.getInputStream().readAllBytes(),
+                        java.nio.charset.StandardCharsets.UTF_8).trim();
+                int code = p.waitFor();
+                String version = out.lines().filter(l -> l.matches("^[0-9].*")).findFirst().orElse(out);
+                result = code == 0 && !version.isBlank()
+                        ? "✓ sqlmap works — version " + version
+                        : "✗ sqlmap did not run cleanly (exit " + code + "): " + out;
+            } catch (Exception ex) {
+                result = "✗ Could not run sqlmap: " + ex.getMessage()
+                        + "  (check the Python path)";
+            }
+            final String msg = result;
+            SwingUtilities.invokeLater(() -> {
+                configStatus.setText(msg);
+                configStatus.setForeground(msg.startsWith("✓")
+                        ? new Color(0x4c, 0xaf, 0x50) : new Color(0xE0, 0x5a, 0x5a));
+            });
+        }, "sqlmap-test");
+        t.setDaemon(true);
+        t.start();
     }
 
     /** Create a new empty tab (user then pastes/edits a request). */

@@ -17,17 +17,16 @@ import java.util.Optional;
 /**
  * Burp Suite Pro extension: "Standalone sqlmap".
  *
- * Runs sqlmap on a workstation that cannot install sqlmap (or even Python) by
- * bundling an embeddable Python runtime and the sqlmap source inside the JAR.
- * On first use the runtime is extracted to a temp directory and sqlmap is
- * driven as a subprocess. A selected Burp request is handed to sqlmap verbatim
- * (via a temporary request file) so headers, cookies and body are preserved.
+ * Drives a user-supplied sqlmap (configured in the settings) against Burp
+ * requests. A selected Burp request is handed to sqlmap verbatim (via a
+ * temporary request file) so headers, cookies and body are preserved.
  */
 public class SqlmapExtension implements BurpExtension, ContextMenuItemsProvider {
 
-    static final String NAME = "Standalone sqlmap";
+    static final String NAME = "sqlmap";
 
     private MontoyaApi api;
+    private SqlmapSettings settings;
     private SqlmapRunner runner;
     private SqlmapTab tab;
 
@@ -36,8 +35,9 @@ public class SqlmapExtension implements BurpExtension, ContextMenuItemsProvider 
         this.api = api;
         api.extension().setName(NAME);
 
-        this.runner = new SqlmapRunner(api);
-        this.tab = new SqlmapTab(api, runner);
+        this.settings = new SqlmapSettings(api);
+        this.runner = new SqlmapRunner(api, settings);
+        this.tab = new SqlmapTab(api, runner, settings);
 
         Registration uiReg = api.userInterface().registerSuiteTab(NAME, tab.getComponent());
         api.userInterface().registerContextMenuItemsProvider(this);
@@ -50,8 +50,9 @@ public class SqlmapExtension implements BurpExtension, ContextMenuItemsProvider 
 
         api.logging().logToOutput("========================================");
         api.logging().logToOutput(" " + NAME + " loaded.");
-        api.logging().logToOutput(" Bundled runtime — no local Python/sqlmap install required.");
-        api.logging().logToOutput(" Right-click a request > 'Scan with sqlmap', or use the '" + NAME + "' tab.");
+        api.logging().logToOutput(" Set your Python and sqlmap paths in the '" + NAME + "' tab.");
+        api.logging().logToOutput(" Download sqlmap: " + SqlmapSettings.SQLMAP_DOWNLOAD_URL);
+        api.logging().logToOutput(" Then right-click a request > 'Scan with sqlmap'.");
         api.logging().logToOutput("========================================");
     }
 

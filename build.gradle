@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'burpsqlmap'
-version = '1.0.0'
+version = '0.0.2.0'
 
 java {
     toolchain {
@@ -23,28 +23,13 @@ dependencies {
     testImplementation 'org.xerial:sqlite-jdbc:3.45.1.0'
 }
 
-// The extension jar bundles src/main/resources, which includes the embeddable
-// Python (runtime/python-embed.zip) and sqlmap (runtime/sqlmap.zip). These make
-// the extension self-contained: no Python or sqlmap install on the workstation.
+// Nothing is bundled: the analyst points the extension at their own Python and
+// sqlmap (configured in the extension's settings). The jar is just the compiled
+// classes plus the Montoya service descriptor, so it stays tiny.
 jar {
     archiveBaseName = 'burp-sqlmap'
-    from('src/main/resources') {
-        include 'runtime/**'
-    }
     manifest {
-        attributes('Implementation-Title': 'Standalone sqlmap',
+        attributes('Implementation-Title': 'sqlmap for Burp',
                    'Implementation-Version': version)
     }
 }
-
-tasks.register('bundledResourcesCheck') {
-    doLast {
-        ['src/main/resources/runtime/python-embed.zip',
-         'src/main/resources/runtime/sqlmap.zip'].each {
-            if (!file(it).exists()) {
-                throw new GradleException("Missing bundled runtime: $it — see README 'Fetching the runtime'.")
-            }
-        }
-    }
-}
-jar.dependsOn 'bundledResourcesCheck'

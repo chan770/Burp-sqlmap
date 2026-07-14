@@ -17,14 +17,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Fetch bundled runtime (Python + sqlmap)
-        run: |
-          mkdir -p src/main/resources/runtime
-          curl -L -o src/main/resources/runtime/python-embed.zip \
-            https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip
-          curl -L -o src/main/resources/runtime/sqlmap.zip \
-            https://github.com/sqlmapproject/sqlmap/archive/refs/heads/master.zip
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
